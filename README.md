@@ -1,4 +1,4 @@
-#eosio-testnet - A Helm chart to bootstrap an EOSIO Testnet on Kubernetes
+# eosio-testnet - A Helm chart to bootstrap an EOSIO Testnet on Kubernetes
 
 This is a Helm chart to create a EOSIO Testnet on Kubernetes.  It exposes a single HTTP endpoint for cleos to connect to. 
 

@@ -1,0 +1,68 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: {{ include "eosio-testnet.biosfullname" . }}
+  labels:
+    app: {{ include "eosio-testnet.name" . }}
+    chart: {{ include "eosio-testnet.chart" . }}
+    release: {{ .Release.Name }}
+    heritage: {{ .Release.Service }}
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bios
+      release: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: bios
+        release: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Chart.Name }}
+          image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+          imagePullPolicy: {{ .Values.image.pullPolicy }}
+          command: 
+            - bash
+            - /eosio/nodeos_wrapper.sh
+            - --plugin 
+            - eosio::chain_api_plugin 
+            - --plugin 
+            - eosio::history_api_plugin
+            - --plugin 
+            - eosio::http_plugin 
+            - --http-server-address 
+            - 0.0.0.0:8888 
+            - --http-validate-host 
+            - "false"
+            - --p2p-listen-endpoint 
+            - 0.0.0.0:9876 
+            - --p2p-server-address 
+            - {{ include "eosio-testnet.biosfullname" . }}:9876
+            - --enable-stale-production 
+            - --producer-name 
+            - eosio
+            - --genesis-json 
+            - /eosio/genesis.json
+          args: {{ toJson .Values.args }}
+          env:
+            - name: GENESISKEY
+              value: {{ .Values.genesis.signatureProvider }}
+          ports:
+            - containerPort: 8888
+              protocol: TCP
+            - containerPort: 9876
+              protocol: TCP
+          readinessProbe:
+            httpGet:
+              path: /v1/chain/get_info
+              port: 8888
+          volumeMounts:
+            - name: config-volume
+              mountPath: "/eosio"
+      volumes:
+        - name: config-volume
+          configMap:
+            name: {{ include "eosio-testnet.fullname" . }}
+

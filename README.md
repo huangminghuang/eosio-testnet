@@ -9,7 +9,7 @@ If you are unfamilar with kubernetes and just want to to setup the Testnet on Go
 ```bash
 $ CLUSTER_NAME=eosionet
 $ gcloud container clusters create $CLUSTER_NAME --zone us-central1-b --num-nodes=4 --enable-autoupgrade
-$ curl -L https://git.io/vAgz3 | sh  ### install Helm and Tiller
+$ curl -L https://git.io/vAgz3 | bash  ### install Helm and Tiller
 $ git clone https://github.com/huangminghuang/eosio-testnet.git
 $ cd eosio-testnet
 $ helm install . --name eosio

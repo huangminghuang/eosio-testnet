@@ -20,7 +20,7 @@ spec:
         app: nodeos
         release: {{ .Release.Name }}
     spec:
-      terminationGracePeriodSeconds: 100
+      terminationGracePeriodSeconds: 10
       containers:
         - name: {{ .Chart.Name }}
           image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"

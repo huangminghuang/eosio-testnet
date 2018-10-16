@@ -77,7 +77,7 @@ Parameter | Description | Default
 replicaCount | total number of nodeos pods (excluding the BIOS node) on the cluster  | 4
 producerCount | number of producer nodeos pods on the cluster  | 4
 service.port | the TCP port for the exposed HTTP endpoint | 8888
-args | the argumenets passed to all nodeos processes | ["--max-transaction-time", "50000", "--abi-serializer-max-time-ms", "990000", "--contracts-console", "--filter-on", "*"]
+args | the argumenets passed to all nodeos processes | ["--max-transaction-time", "30", "--abi-serializer-max-time-ms", "15000"]
 genesis.initial_timestamp | initial timestamp for genesis node | "2018-09-12T16:21:19.132"
 genesis.signatureProvider |  the public and private key pair for genesis node | EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV=KEY:5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3
 genesis.initial_configuration | genesis initial configuration | 

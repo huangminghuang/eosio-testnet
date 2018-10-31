@@ -33,6 +33,10 @@ metadata:
     heritage: {{ .Release.Service }}
 spec:
   type: {{ .Values.service.type }}
+  loadBalancerSourceRanges: 
+{{- range $index, $cidr := .Values.service.loadBalancerSourceRanges | split "," }}
+    - {{ $cidr }}
+{{- end }}
   ports:
     - port: {{ .Values.service.port }}
       targetPort: 8888

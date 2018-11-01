@@ -18,10 +18,3 @@ data:
 {{ .Files.Get "eosio/logging.json" | indent 4 }}
   nodeos_wrapper.sh: |-
 {{ .Files.Get "eosio/nodeos_wrapper.sh" | indent 4 }}
-{{- if .Values.producer_keys }}
-  producer_keys.txt: |-
-    {{- range .Values.producer_keys }}
-    Private key: {{ index . "private" }}
-    Public key: {{ index . "public" }}
-    {{- end }}
-{{- end }}

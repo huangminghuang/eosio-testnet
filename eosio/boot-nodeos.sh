@@ -32,14 +32,10 @@ wcmd="cleos --wallet-url ${wdurl} wallet"
 function echoerr { echo "$@" 1>&2; }
 
 function config_producer_args {
-  predefined_keys='/eosio/producer-keys.txt'
-  keyfile=$config_dir/key.txt
+  keyfile=/eosio/key$ordinal.txt
   
   # create a new key file if not existed
-  if [ ! -s "$keyfile" ]; then
-    [ ! -f "$predefined_keys" ] || sed -n -e "$(($ordinal*2-1))p" -e "$(($ordinal*2))p"  "$predefined_keys" | sed '/^$/d' > "$keyfile"
-    cleos create key --file $keyfile
-  fi
+  [ -f "$keyfile" ] || cleos create key --file $keyfile
 
   readarray syskey < $keyfile
   pubsyskey=$(echo ${syskey[1]#"Public key: "} | xargs) ## xargs is usd to remove leading and trailing whitespaces 

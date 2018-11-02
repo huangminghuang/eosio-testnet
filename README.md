@@ -83,3 +83,4 @@ genesis.signatureProvider |  the public and private key pair for genesis node | 
 genesis.initial_configuration | genesis initial configuration | 
 persistence.enabled | whether to enable persistence for nodeos states | false
 persistence.size | the size of persistence disk if enabled | 100Gi
+producerKeys | the list of private keys for producers separated by comma | "" 

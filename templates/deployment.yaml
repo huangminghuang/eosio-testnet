@@ -46,9 +46,6 @@ spec:
             - --genesis-json 
             - /eosio/genesis.json
           args: {{ toJson .Values.args }}
-          env:
-            - name: GENESISKEY
-              value: {{ .Values.genesis.signatureProvider }}
           ports:
             - containerPort: 8888
               protocol: TCP

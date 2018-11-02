@@ -36,10 +36,12 @@ spec:
               value: "{{ .Values.replicaCount }}"
             - name: PRODUCERS
               value: "{{ .Values.producerCount }}"
-            - name: GENESISKEY
+            - name: GENESIS_KEY
               value: "{{ .Values.genesis.signatureProvider }}"
             - name: SERVICE_PATTERN
               value: {{ include "eosio-testnet.nodeosfullname" . }}-{}.{{ include "eosio-testnet.headlessService" . }}
+            - name: PRODUCER_KEYS
+              value: "{{ .Values.producerKeys }}"
           ports:
             - containerPort: 8888
               protocol: TCP

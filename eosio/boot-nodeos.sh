@@ -20,7 +20,7 @@ bios_host=${BIOS_ADDR%:*}
 wallet_host=127.0.0.1:8899
 wdurl=http://${wallet_host}
 
-genesiskey=${GENESISKEY:-"EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV=KEY:5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3"}
+genesiskey=${GENESIS_KEY:-"EOS6MRyAjQq8ud7hVNYcfnVPJqcVpscN5So8BhtHuGYqET5GDW5CV=KEY:5KQwrPbwdL6PhXujxW37FSSQZ1JiwsST4cqQzDeyXtP79zkvFD3"}
 pri_genesiskey=${genesiskey##*=KEY:}
 pub_genesiskey=${genesiskey%=KEY:*}
 
@@ -31,24 +31,6 @@ wcmd="cleos --wallet-url ${wdurl} wallet"
 
 function echoerr { echo "$@" 1>&2; }
 
-function config_producer_args {
-  keyfile=/eosio/key$ordinal.txt
-  
-  # create a new key file if not existed
-  [ -f "$keyfile" ] || cleos create key --file $keyfile
-
-  readarray syskey < $keyfile
-  pubsyskey=$(echo ${syskey[1]#"Public key: "} | xargs) ## xargs is usd to remove leading and trailing whitespaces 
-  prisyskey=$(echo ${syskey[0]#"Private key: "} | xargs)
-  ARGS="--signature-provider ${pubsyskey}=KEY:${prisyskey} $ARGS --plugin eosio::producer_plugin"
-
-  alphabets="abcdefghijklmnopqrstuv"
-  for (( id=$ordinal; id<21; id+=$num_producers )); do
-    producer_name="defproducer${alphabets:$id:1}"
-    ARGS="$ARGS --producer-name ${producer_name}"
-    node_producers="${node_producers} ${producer_name}"
-  done
-}
 
 function config_p2p_addresses {
   ARGS="$ARGS --plugin eosio::net_plugin"
@@ -106,17 +88,53 @@ function setup_eosio {
   
 }
 
+
+function setup_wallet {
+  rm -rf ${HOME}/eosio-wallet
+  keosd --http-server-address ${wallet_host} &
+  wait_wallet_ready
+  $wcmd create --to-console -n ignition
+  
+  keyfile=$config_dir/key.txt
+  
+  keys=($(echo "$PRODUCER_KEYS" | tr ',' '\n')) 
+  prikey=${keys[$ordinal]}
+  
+  if [ -z "$prikey" ]; then
+    # create a new key file if not existed
+    [ -f "$keyfile" ] || cleos create key --file $keyfile
+
+    readarray syskey < $keyfile
+    prikey=$(echo ${syskey[0]#"Private key: "} | xargs) ## xargs is usd to remove leading and trailing whitespaces 
+  fi
+    
+  pubkey=$($ecmd wallet import -n ignition --private-key $prikey | sed 's/[^:]*: //')  
+  ARGS="--signature-provider ${pubkey}=KEY:${prikey} $ARGS --plugin eosio::producer_plugin"
+}
+
+function config_producer_args {
+  
+  setup_wallet
+  
+  alphabets="abcdefghijklmnopqrstuv"
+  for (( id=$ordinal; id<21; id+=$num_producers )); do
+    producer_name="defproducer${alphabets:$id:1}"
+    ARGS="$ARGS --producer-name ${producer_name}"
+    node_producers="${node_producers} ${producer_name}"
+  done
+}
+
 function setup_producer_account {  
-   
-  [ -z "$prisyskey" ] || $ecmd wallet import -n ignition --private-key $prisyskey
+
+  [ -n "$node_producers" ] || return 0
   
   while ! $ecmd get account eosio | grep total; do
     sleep 3
   done
   
   for producer_name in $node_producers; do
-    $ecmd system newaccount --transfer --stake-net "10000000.0000 SYS" --stake-cpu "10000000.0000 SYS"  --buy-ram "10000000.0000 SYS" eosio $producer_name $pubsyskey $pubsyskey || continue
-    $ecmd system regproducer $producer_name $pubsyskey
+    $ecmd system newaccount --transfer --stake-net "10000000.0000 SYS" --stake-cpu "10000000.0000 SYS"  --buy-ram "10000000.0000 SYS" eosio $producer_name $pubkey $pubkey || continue
+    $ecmd system regproducer $producer_name $pubkey
     $ecmd system voteproducer prods $producer_name $producer_name
   done
 }
@@ -161,17 +179,15 @@ if [ -d "$data_dir" ] ; then
 else
   ## remove data_dir if it's a dirty restart
   rm -rf ${data_dir}
-  rm -rf ${HOME}/eosio-wallet
-  keosd --http-server-address ${wallet_host} &
-  wait_wallet_ready
-  $wcmd create --to-console -n ignition
+
   $wcmd import -n ignition --private-key $pri_genesiskey
   wait_bios_ready
   setup_eosio
   setup_producer_account
   ARGS="$ARGS --p2p-peer-address ${bios_host}:9876 --genesis-json /eosio/genesis.json $genesis_timestamp_option"
-  pkill keosd
 fi
+
+pkill keosd || :
 
 set -f #disable file name globing 
 bash /eosio/nodeos_wrapper.sh $ARGS &

@@ -1,5 +1,5 @@
-apiVersion: apps/v1beta2
-kind: Deployment
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: {{ include "eosio-testnet.biosfullname" . }}
   labels:
@@ -8,11 +8,6 @@ metadata:
     release: {{ .Release.Name }}
     heritage: {{ .Release.Service }}
 spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: bios
-      release: {{ .Release.Name }}
   template:
     metadata:
       labels:
@@ -41,6 +36,7 @@ spec:
             - name: config-volume
               mountPath: "/usr/local/etc/eosio/genesis.json"
               subPath: genesis.json
+      restartPolicy: OnFailure
       volumes:
         - name: config-volume
           configMap:

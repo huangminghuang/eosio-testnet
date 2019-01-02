@@ -6,8 +6,8 @@ replicaCount: 4
 producerCount: 4
 
 image:
-  repository: eosio/eos
-  tag: latest
+  repository: huangminghuang/eos
+  tag: v1.5.2
   pullPolicy: IfNotPresent
 
 service:
@@ -18,7 +18,7 @@ service:
 # The argument passed to nodeos 
 args:
   - --max-transaction-time 
-  - "30"
+  - "5000"
   - --abi-serializer-max-time-ms 
   - "15000"
   

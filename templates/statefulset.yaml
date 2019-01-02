@@ -27,7 +27,7 @@ spec:
           imagePullPolicy: {{ .Values.image.pullPolicy }}
           command:
             - bash
-            - /eosio/boot-nodeos.sh
+            - /usr/local/bin/boot-nodeos.sh
           args: {{ toJson .Values.args }}
           env:
             - name: BIOS_ADDR
@@ -55,7 +55,8 @@ spec:
 {{ toYaml .Values.resources | indent 12 }}
           volumeMounts:
             - name: config-volume
-              mountPath: /eosio
+              mountPath: /usr/local/etc/eosio/genesis.json
+              subPath: genesis.json
 {{- if .Values.persistence.enabled }}
             - name: data
               mountPath: /root/.local/share/eosio

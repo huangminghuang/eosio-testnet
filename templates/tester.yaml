@@ -1,0 +1,66 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: "{{ .Release.Name }}-tester"
+  labels:
+    app.kubernetes.io/name: "{{ .Release.Name }}"
+  annotations:
+    helm.sh/hook: test-success
+spec:
+  restartPolicy: Never
+  containers:
+  - name: tester
+    image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+    command: ["bash"]
+    args: ["/tester/run.sh"]
+    volumeMounts:
+    - name: test-volume
+      mountPath: /tester
+  volumes:
+  - name: test-volume
+    configMap:
+      name: "{{ .Release.Name }}-test"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: "{{ .Release.Name }}-test"
+  labels:
+    app.kubernetes.io/name: "{{ .Release.Name }}"
+  annotations:
+    marketplace.cloud.google.com/verification: test
+data:
+  run.sh: |-
+    set -ex
+    
+    # this script tests if the number of producers in the schedule has reached 21. 
+    apt-get update && apt-get install -y jq
+    svc=http://{{ include "eosio-testnet.nodeosfullname" . }}:{{ .Values.service.port }}
+    
+    ecmd="cleos --wallet-url http://127.0.0.1:8899 --url ${svc}"
+    
+    function num_producers {
+      $ecmd get schedule -j | jq "..|.producers?|length " | jq -s max
+    }
+    
+    function wailt_service_ready {
+      for (( i=0 ; i<10; i++ )); do
+        ! $ecmd get info || return 0
+        sleep 20
+      done
+      return 1
+    }
+    
+    wailt_service_ready || exit 1
+    
+    let walt_times=2*{{ .Values.producerCount }}
+    
+    i=0
+    while [[ $(num_producers) < 21 ]] && [[ $i < $walt_times ]]; do
+      sleep 60
+      i=$((i + 1))
+    done
+    
+    [[ $(num_producers) == 21 ]] || exit 1
+    exit 0
